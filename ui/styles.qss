@@ -1,0 +1,363 @@
+/* Palette — mirrors ui/theme.py. Change one, change both.
+
+   bg          #0b0b0e      text        #ecedf3
+   panel       #121218      muted       #8b8b9a
+   raised      #1c1c24      subdued     #55555f
+   raised-hi   #262630      violet      #a06bff   interactive accent
+   border      #23232d      violet-hi   #c4a0ff
+   border-hi   #383846      violet-dim  #6f3fd4
+                            cyan        #2ee8d5   RESERVED: live audio only
+                            cyan-dim    #17a99c
+
+   Cyan is a signal, not a decoration. It appears on the playhead, the playing
+   row, the level meter and the PLAYING readout — nowhere else.
+
+   Letter-spacing and text-transform are not supported by Qt Style Sheets;
+   display type is set via set_display_font() and .upper() in code.
+*/
+
+QWidget {
+    background-color: #0b0b0e;
+    color: #ecedf3;
+    font-family: "JetBrains Mono", "Cascadia Mono", "Cascadia Code", "Consolas", monospace;
+    font-size: 13px;
+}
+
+/* --- frameless chrome ---------------------------------------------------- */
+
+#windowFrame {
+    background-color: #0b0b0e;
+    border: 1px solid #383846;
+}
+/* Maximized against the screen edge, an outline just looks like a seam. */
+#windowFrame[maximized="true"] {
+    border: 1px solid #0b0b0e;
+}
+
+/* The borrowed art panel covers this entirely; the colour only matters for the
+   instant between showing the window and the panel's first paint. */
+#miniPlayer {
+    background-color: #08080a;
+}
+
+#titleBar {
+    background-color: #121218;
+    border-bottom: 1px solid #23232d;
+}
+#appMark {
+    color: #a06bff;
+    background: transparent;
+}
+
+/* Size is set HERE, not with setFixedSize() in code: a min-width/max-width in
+   a stylesheet overrides the widget's programmatic fixed size, so the two
+   fight and the stylesheet wins. Leaving `min-width: 0` here collapsed these
+   to ~8px and clipped the glyphs. */
+#winButton, #winPin, #winClose {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #a8a8b8;
+    min-width: 34px;
+    max-width: 34px;
+    min-height: 26px;
+    max-height: 26px;
+    padding: 0;
+    font-size: 13px;
+}
+#winButton:hover, #winPin:hover {
+    background-color: #262630;
+    color: #ecedf3;
+}
+#winClose:hover {
+    background-color: #ff5c6c;
+    color: #0b0b0e;
+}
+/* Latched on, the pin borrows the accent so "this window is pinned" is
+   readable at a glance rather than a subtle shade of grey. */
+#winPin:checked {
+    background-color: #221a33;
+    color: #a06bff;
+}
+#winPin:checked:hover { background-color: #2b2140; }
+#winButton:pressed, #winPin:pressed, #winClose:pressed { background-color: #1c1c24; }
+
+/* --- buttons ------------------------------------------------------------- */
+
+QPushButton {
+    background-color: #1c1c24;
+    border: 1px solid #23232d;
+    border-radius: 5px;
+    padding: 7px 14px;
+    color: #c9c9d6;
+    min-width: 60px;
+}
+QPushButton:hover {
+    background-color: #262630;
+    border-color: #383846;
+    color: #ecedf3;
+}
+QPushButton:pressed { background-color: #121218; }
+QPushButton:disabled {
+    background-color: #121218;
+    border-color: #1c1c24;
+    color: #45454f;
+}
+QPushButton:checked,
+QPushButton[active="true"] {
+    background-color: rgba(160, 107, 255, 0.16);
+    border-color: #a06bff;
+    color: #c4a0ff;
+}
+QPushButton:checked:hover,
+QPushButton[active="true"]:hover {
+    background-color: rgba(160, 107, 255, 0.28);
+    border-color: #c4a0ff;
+}
+
+QPushButton#transportButton {
+    min-width: 44px;
+    padding: 9px 10px;
+    font-size: 14px;
+}
+
+/* The one filled, high-emphasis control. Its glow is a drop-shadow effect
+   applied in code — QSS has no box-shadow. */
+QPushButton#playButton {
+    background-color: #a06bff;
+    border: 1px solid #c4a0ff;
+    border-radius: 5px;
+    color: #12081f;
+    font-weight: 700;
+    font-size: 15px;
+    min-width: 58px;
+    padding: 9px 10px;
+}
+QPushButton#playButton:hover { background-color: #c4a0ff; }
+QPushButton#playButton:pressed { background-color: #6f3fd4; }
+QPushButton#playButton:disabled {
+    background-color: #1c1c24;
+    border-color: #23232d;
+    color: #45454f;
+}
+
+/* Small square action buttons (preview / refresh in the Discover panel) */
+QPushButton#chipButton {
+    min-width: 0;
+    padding: 5px 10px;
+    font-size: 11px;
+    color: #8b8b9a;
+}
+
+/* --- inputs -------------------------------------------------------------- */
+
+QLineEdit {
+    background-color: #121218;
+    border: 1px solid #23232d;
+    border-radius: 5px;
+    padding: 8px 12px;
+    color: #ecedf3;
+    selection-background-color: #a06bff;
+    selection-color: #ffffff;
+}
+QLineEdit:hover { border-color: #383846; }
+QLineEdit:focus {
+    border: 1px solid #a06bff;
+    background-color: #16161d;
+}
+QLineEdit:disabled { color: #45454f; }
+
+/* Search lives in the title bar, so it sits on the bar's colour. */
+QLineEdit#searchInput {
+    background-color: #0b0b0e;
+    border: 1px solid #23232d;
+    padding: 6px 12px;
+    max-width: 460px;
+}
+QLineEdit#searchInput:focus { border-color: #a06bff; background-color: #0e0e13; }
+
+QComboBox {
+    background-color: #1c1c24;
+    border: 1px solid #23232d;
+    border-radius: 5px;
+    padding: 7px 12px;
+    color: #ecedf3;
+    min-width: 150px;
+}
+QComboBox:hover { background-color: #262630; border-color: #383846; }
+QComboBox:focus { border-color: #a06bff; }
+QComboBox::drop-down { border: none; width: 22px; }
+QComboBox QAbstractItemView {
+    background-color: #121218;
+    border: 1px solid #383846;
+    border-radius: 5px;
+    selection-background-color: #2f2547;
+    selection-color: #ffffff;
+    outline: 0;
+    padding: 4px;
+}
+QComboBox QAbstractItemView::item { padding: 6px 10px; border-radius: 3px; }
+
+/* --- lists --------------------------------------------------------------- */
+
+/* Text colour is deliberately set on the widget, NOT on ::item. A `color` in
+   an ::item rule makes the stylesheet win over the model's ForegroundRole,
+   which would silently swallow the cyan the playing row sets in code — so the
+   playing row would look identical to any other. Keep ::item rules to
+   geometry and background only. */
+QListWidget {
+    background-color: #121218;
+    border: 1px solid #23232d;
+    border-radius: 5px;
+    padding: 5px;
+    outline: 0;
+    color: #c9c9d6;
+}
+QListWidget::item {
+    padding: 8px 10px;
+    border-radius: 3px;
+    margin: 1px 0;
+}
+QListWidget::item:hover { background-color: #1c1c24; }
+QListWidget::item:selected { background-color: #2f2547; }
+
+QListWidget#discoverList { color: #b6b6c4; }
+QListWidget#discoverList::item {
+    padding: 9px 10px;
+    margin: 2px 0;
+    border: 1px solid #1c1c24;
+}
+QListWidget#discoverList::item:hover { border-color: #383846; background-color: #1c1c24; }
+QListWidget#discoverList::item:selected {
+    border-color: #a06bff;
+    background-color: rgba(160, 107, 255, 0.12);
+}
+
+/* --- volume slider (the seek bar is fully custom-painted) ---------------- */
+
+QSlider::groove:horizontal {
+    height: 3px;
+    background-color: #23232d;
+    border-radius: 1px;
+}
+QSlider::sub-page:horizontal { background-color: #a06bff; border-radius: 1px; }
+QSlider::add-page:horizontal { background-color: #23232d; border-radius: 1px; }
+QSlider::handle:horizontal {
+    background-color: #ecedf3;
+    width: 10px;
+    height: 10px;
+    margin: -4px 0;
+    border-radius: 5px;
+}
+QSlider::handle:horizontal:hover { background-color: #c4a0ff; }
+
+/* --- scrollbars ---------------------------------------------------------- */
+
+QScrollBar:vertical {
+    background-color: transparent;
+    width: 9px;
+    margin: 4px 0;
+    border: none;
+}
+QScrollBar::handle:vertical {
+    background-color: #2c2c38;
+    min-height: 30px;
+    border-radius: 4px;
+}
+QScrollBar::handle:vertical:hover { background-color: #45455a; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; background: none; }
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }
+
+QScrollBar:horizontal {
+    background-color: transparent;
+    height: 9px;
+    margin: 0 4px;
+    border: none;
+}
+QScrollBar::handle:horizontal {
+    background-color: #2c2c38;
+    min-width: 30px;
+    border-radius: 4px;
+}
+QScrollBar::handle:horizontal:hover { background-color: #45455a; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; background: none; }
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: none; }
+
+/* --- now-playing column -------------------------------------------------- */
+
+/* Inert containers that must not paint over the surface behind them. */
+#transparentPane, #titleBarSlot { background: transparent; }
+
+/* The art "screen": a hard bezel so it reads as a display, not an image. */
+QLabel#coverLabel {
+    background-color: #08080a;
+    border: 1px solid #2c2c38;
+    border-radius: 3px;
+    color: #45454f;
+}
+
+QLabel#statusReadout {
+    color: #2ee8d5;
+    font-size: 11px;
+    background: transparent;
+}
+QLabel#statusReadout[live="false"] { color: #55555f; }
+
+QLabel#titleLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ecedf3;
+    background: transparent;
+}
+QLabel#artistLabel { font-size: 12px; color: #a9a9b8; background: transparent; }
+QLabel#albumLabel  { font-size: 11px; color: #6e6e7c; background: transparent; }
+
+QLabel#sectionLabel {
+    color: #8b8b9a;
+    font-size: 10px;
+    background: transparent;
+}
+QLabel#filenameLabel { color: #8b8b9a; font-size: 11px; padding: 2px 0; }
+QLabel#timeLabel  { color: #8b8b9a; font-size: 11px; }
+QLabel#minorLabel { color: #8b8b9a; font-size: 11px; background: transparent; }
+QLabel#hintLabel  { color: #6e6e7c; font-size: 11px; background: transparent; }
+
+/* --- discover panel ------------------------------------------------------ */
+
+#discoverPanel {
+    background-color: #0e0e13;
+    border: 1px solid #23232d;
+    border-radius: 5px;
+}
+#discoverPanel QLabel { background: transparent; }
+#discoverPanel QScrollArea,
+#discoverPanel QScrollArea > QWidget > QWidget {
+    background: transparent;
+    border: none;
+}
+
+QPushButton#feedTab {
+    min-width: 0;
+    padding: 5px 9px;
+    font-size: 11px;
+    border-radius: 3px;
+    color: #8b8b9a;
+}
+QPushButton#feedTab:checked {
+    background-color: rgba(160, 107, 255, 0.16);
+    border-color: #a06bff;
+    color: #c4a0ff;
+}
+
+/* --- dialogs / tooltips -------------------------------------------------- */
+
+QDialog { background-color: #0b0b0e; }
+
+QToolTip {
+    background-color: #1c1c24;
+    color: #ecedf3;
+    border: 1px solid #a06bff;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 11px;
+}

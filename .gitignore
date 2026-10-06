@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------------------
+# Secrets — never commit. attic/ holds the retired Discover panel, which read
+# YouTube feeds using exported browser cookies. A cookies.txt is a live Google
+# session (full account access), not a config file.
+# ---------------------------------------------------------------------------
+cookies.txt
+cookies*.txt
+*cookies.txt
+*.cookies
+.env
+.env.*
+secrets.*
+*.pem
+*.key
+
+# ---------------------------------------------------------------------------
+# Visuals — the GIF pool is ~78 MB of third-party art and is deliberately not
+# distributed. assets/visuals/README.txt ships; the frames do not. Drop your
+# own .gif/.webp into that folder on each machine and they join the rotation.
+# ---------------------------------------------------------------------------
+assets/visuals/**/*.gif
+assets/visuals/**/*.webp
+assets/visuals/**/*.png
+assets/visuals/**/*.jpg
+assets/visuals/**/*.jpeg
+assets/visuals/**/*.mp4
+assets/visuals/**/*.webm
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------------------------------------------------------------------------
+# Local tooling / editor state
+# ---------------------------------------------------------------------------
+.claude/settings.local.json
+.vscode/
+.idea/
+*.swp
+
+# ---------------------------------------------------------------------------
+# OS cruft
+# ---------------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

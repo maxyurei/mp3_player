@@ -1,0 +1,16 @@
+# GUI + audio.
+# 6.8 is the floor, not 6.6: the audio-reactive glow taps decoded PCM via
+# QAudioBufferOutput (QMediaPlayer.setAudioBufferOutput), which landed in 6.8.
+PySide6>=6.8
+
+# MP3 tag / album-art reading
+mutagen>=1.47
+
+# Move removed songs to the OS Recycle Bin / Trash instead of hard-deleting.
+Send2Trash>=1.8
+
+# In-app YouTube search & download. Invoked as an on-demand subprocess
+# (python -m yt_dlp), never imported into the running app. Keep it updated —
+# yt-dlp breaks whenever YouTube changes things:  pip install -U yt-dlp
+# Also requires ffmpeg on PATH (not a pip package): winget install Gyan.FFmpeg
+yt-dlp
