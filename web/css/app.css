@@ -1,0 +1,248 @@
+/* A screen you can read across a room and operate without looking at it:
+   one big title, one artist line, one hairline of progress. */
+
+:root {
+  --bg: #0a0a0b;
+  --text: #f4f4f5;
+  --muted: #7c7c85;
+  --dim: #46464e;
+  --accent: #f4f4f5;
+  --gap: clamp(1.5rem, 5vw, 3rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* The classes below set display, which would otherwise out-specify the
+   browser's own [hidden] rule and leave hidden elements on screen. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  /* No text selection or long-press callout: every tap here is a transport
+     control, not a chance to select a word. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.stage {
+  /* dvh rather than vh: on iOS Safari vh is the *largest* viewport, so a 100vh
+     layout hides its bottom row behind the browser chrome. */
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  padding: calc(var(--gap) + env(safe-area-inset-top)) var(--gap)
+    calc(var(--gap) + env(safe-area-inset-bottom));
+  /* The stage owns horizontal drags, so the browser must not read a skip
+     swipe as a scroll or a page-back. */
+  touch-action: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+/* --- empty state --- */
+
+.empty {
+  max-width: 34rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.empty-title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 7vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.empty-copy {
+  margin: 0 0 2rem;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.picker {
+  display: inline-block;
+  padding: 0.85rem 1.6rem;
+  border: 1px solid var(--dim);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.picker:hover {
+  border-color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.picker input {
+  /* Hidden but still clickable through the label wrapping it. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pickers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* The secondary route, shown only where folder picking is also on offer. */
+.picker-alt {
+  border-color: transparent;
+  color: var(--muted);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.picker-alt:hover {
+  border-color: var(--dim);
+  background: transparent;
+}
+
+/* --- now playing --- */
+
+.now {
+  max-width: 48rem;
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+}
+
+.artist {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.title {
+  margin: 0 0 clamp(2rem, 7vh, 3.5rem);
+  font-size: clamp(2rem, 9vw, 4.5rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  /* Long titles wrap rather than overflowing, but never past three lines. */
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Paused reads as a dimmed screen, so a glance answers "is it playing?" */
+.stage.is-paused .title,
+.stage.is-paused .artist {
+  opacity: 0.45;
+}
+
+.progress {
+  /* Generous hit area around a hairline: the bar is 3px, the target is 44. */
+  padding: 1.25rem 0;
+  margin: -1.25rem 0;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.progress-track {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  /* Driven by scaleX from JS — far cheaper than animating width, since it
+     never triggers layout. */
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 180ms linear;
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.7rem;
+  color: var(--dim);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- footer --- */
+
+.foot {
+  text-align: center;
+  min-height: 2.5rem;
+}
+
+.status,
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--dim);
+}
+
+.hint {
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+
+/* --- skip feedback --- */
+
+/* A swipe should register in the corner of your eye without needing a look. */
+.stage.flash-next {
+  animation: nudge-left 200ms ease;
+}
+
+.stage.flash-back {
+  animation: nudge-right 200ms ease;
+}
+
+@keyframes nudge-left {
+  50% {
+    transform: translateX(-10px);
+    opacity: 0.75;
+  }
+}
+
+@keyframes nudge-right {
+  50% {
+    transform: translateX(10px);
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage.flash-next,
+  .stage.flash-back {
+    animation: none;
+  }
+
+  .progress-fill {
+    transition: none;
+  }
+}

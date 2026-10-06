@@ -1,0 +1,9 @@
+# Cloudflare Pages reads this file; it is not served to browsers.
+
+# The service worker is the update trigger for everything else, so it must
+# never be served from a CDN edge cache. A stale sw.js pins a stale app.
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.json
+  Cache-Control: no-cache

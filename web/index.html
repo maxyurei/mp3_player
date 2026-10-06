@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- viewport-fit=cover so the layout can reach under the iPhone notch and
+         home indicator; user-scalable=no because a double-tap zoom would fight
+         tap-to-play. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0a0b" />
+    <title>Player</title>
+
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
+
+    <!-- iOS ignores the manifest's display mode and reads these instead.
+         black-translucent puts the page under the status bar, which the
+         safe-area padding in app.css accounts for. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Player" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png" />
+
+    <link rel="stylesheet" href="css/app.css" />
+  </head>
+  <body>
+    <main id="stage" class="stage">
+      <section id="empty" class="empty">
+        <h1 class="empty-title">Player</h1>
+        <p id="emptyCopy" class="empty-copy"></p>
+
+        <div class="pickers">
+          <label class="picker" id="pickFolder">
+            <input
+              type="file"
+              id="picker"
+              webkitdirectory
+              directory
+              multiple
+            />
+            <span>Choose a folder</span>
+          </label>
+          <label class="picker" id="pickFiles">
+            <input type="file" id="pickerFiles" multiple accept="audio/*" />
+            <span>Choose songs</span>
+          </label>
+        </div>
+      </section>
+
+      <section id="now" class="now" hidden>
+        <p id="artist" class="artist"></p>
+        <h1 id="title" class="title"></h1>
+
+        <div id="progress" class="progress" role="slider" aria-label="Seek">
+          <div class="progress-track">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+          <div class="times">
+            <span id="elapsed">0:00</span>
+            <span id="remaining">0:00</span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <p id="status" class="status"></p>
+        <p id="hint" class="hint"></p>
+      </footer>
+    </main>
+
+    <!-- One element for the whole session; see js/audio.js for why. -->
+    <audio id="audio" preload="metadata" playsinline></audio>
+
+    <script src="js/platform.js"></script>
+    <script src="js/shuffle.js"></script>
+    <script src="js/queue.js"></script>
+    <script src="js/metadata.js"></script>
+    <script src="js/source-local.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/media-session.js"></script>
+    <script src="js/gestures.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/pwa.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
