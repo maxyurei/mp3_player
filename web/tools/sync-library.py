@@ -60,6 +60,16 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--no-upload", action="store_true",
                         help="build the manifest but do not run rclone")
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="delete bucket objects no longer in the folder (asks first)",
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="skip the confirmation prompt that --prune would otherwise ask",
+    )
     parser.add_argument("--dry-run", action="store_true",
                         help="show what would happen, change nothing")
     return parser.parse_args()
@@ -150,8 +160,9 @@ def build(folder: Path, staging: Path, dry_run: bool) -> list[dict]:
         for path in folder.rglob("*")
         if path.is_file() and path.suffix.lower() in AUDIO_SUFFIXES
     )
-    if not files:
-        sys.exit(f"No audio files found under {folder}")
+    # An empty folder is not an error: it is what removing your last song looks
+    # like. It is also what a mistyped path looks like, which is why main()
+    # asks before publishing one rather than this function refusing outright.
 
     covers_dir = staging / COVER_PREFIX
     if not dry_run:
@@ -242,6 +253,81 @@ def upload(folder: Path, staging: Path, remote: str, bucket: str, dry_run: bool)
             sys.exit(f"rclone failed with exit code {result.returncode}")
 
 
+def confirm(question: str, assume_yes: bool) -> bool:
+    if assume_yes:
+        return True
+    try:
+        return input(f"{question} [y/N] ").strip().lower() in {"y", "yes"}
+    except EOFError:
+        # Not attached to a terminal (a cron job, a pipe). Silence is "no".
+        return False
+
+
+def remote_keys(remote: str, bucket: str, prefix: str) -> set[str]:
+    """Paths under one bucket prefix, relative to it."""
+    result = subprocess.run(
+        ["rclone", "lsf", f"{remote}:{bucket}/{prefix}", "-R", "--files-only"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        # A prefix that does not exist yet lists as an error. Treating a failed
+        # listing as "empty" is the safe direction: it prunes nothing, where
+        # treating it as authoritative would propose deleting everything.
+        return set()
+    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
+def prune(tracks: list[dict], remote: str, bucket: str, dry_run: bool,
+          assume_yes: bool) -> None:
+    """Delete bucket objects the folder no longer contains.
+
+    Opt-in, because the bucket is a backup of sorts and a sync that silently
+    deletes is a sync that eventually deletes something irreplaceable.
+    """
+    wanted = {
+        AUDIO_PREFIX: {t["key"].split("/", 1)[1] for t in tracks},
+        COVER_PREFIX: {
+            t["cover"].split("/", 1)[1] for t in tracks if t.get("cover")
+        },
+    }
+
+    for prefix, expected in wanted.items():
+        orphans = sorted(remote_keys(remote, bucket, prefix) - expected)
+        if not orphans:
+            print(f"\n{prefix}/: nothing to prune")
+            continue
+
+        print(f"\n{prefix}/: {len(orphans)} object(s) no longer in the folder")
+        for name in orphans[:20]:
+            print(f"  - {name}")
+        if len(orphans) > 20:
+            print(f"  ... and {len(orphans) - 20} more")
+
+        if dry_run:
+            print("  (--dry-run: nothing deleted)")
+            continue
+        if not confirm(f"  Delete these {len(orphans)} from the bucket?", assume_yes):
+            print("  skipped")
+            continue
+
+        # --files-from so one rclone call handles the lot and the names never
+        # go through a shell, where quoting would break on the first filename
+        # containing a space or a quote.
+        listing = Path(f"/tmp/sync-library-prune-{prefix}.txt")
+        listing.write_text("\n".join(orphans) + "\n", encoding="utf-8")
+        try:
+            result = subprocess.run(
+                ["rclone", "delete", f"{remote}:{bucket}/{prefix}",
+                 "--files-from", str(listing)]
+            )
+            if result.returncode != 0:
+                sys.exit(f"rclone delete failed with exit code {result.returncode}")
+            print(f"  deleted {len(orphans)}")
+        finally:
+            listing.unlink(missing_ok=True)
+
+
 def main() -> None:
     args = parse_args()
     folder = args.folder.expanduser().resolve()
@@ -250,7 +336,18 @@ def main() -> None:
 
     staging = args.staging.expanduser().resolve()
     print(f"Scanning {folder}")
-    build(folder, staging, args.dry_run)
+    tracks = build(folder, staging, args.dry_run)
+
+    if not tracks:
+        # Reached by removing every song, and equally by pointing at the wrong
+        # folder. Publishing empties the library in the player, so say exactly
+        # that and let the answer decide.
+        print(f"\nNo audio files under {folder}.")
+        print("Publishing this would leave the player with an empty library.")
+        print("(The audio already in the bucket stays unless you pass --prune.)")
+        if not confirm("Publish an empty library?", args.yes):
+            print("Nothing changed.")
+            return
 
     if args.no_upload:
         print(f"\nBuilt {staging}/tracks.json — not uploading (--no-upload).")
@@ -260,6 +357,10 @@ def main() -> None:
         return
 
     upload(folder, staging, args.remote, args.bucket, args.dry_run)
+    if args.prune:
+        # After the upload, so a failed upload cannot leave the bucket pruned
+        # against a manifest that never shipped.
+        prune(tracks, args.remote, args.bucket, args.dry_run, args.yes)
     if not args.dry_run:
         print("\nDone. Reopen the player to pick up the new library.")
 
