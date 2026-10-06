@@ -9,7 +9,11 @@
 (function (MP) {
   'use strict';
 
-  const DEFAULT_LIBRARY_BASE = '';
+  // The R2 bucket's public development URL. Readable by anyone who has it —
+  // unguessable rather than private — until the password Worker goes in front
+  // of it, at which point only this line changes.
+  const DEFAULT_LIBRARY_BASE =
+    'https://pub-acd1ffd9c18240da8a5cb49883eca419.r2.dev';
 
   // A localStorage override, so a bucket can be pointed at from one device
   // without a redeploy — useful while setting up, and the obvious lever when
