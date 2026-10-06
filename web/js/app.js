@@ -16,9 +16,17 @@
     const ui = new MP.UI(document);
     const audio = new MP.AudioEngine(document.getElementById('audio'));
     const queue = new MP.Queue();
-    const source = MP.LocalSource;
 
+    // Swapped at startup for the bucket when one is configured. Everything
+    // below this line is written against the source interface, not against
+    // either implementation.
+    let source = MP.LocalSource;
     audio.setSource(source);
+
+    function useSource(next) {
+      source = next;
+      audio.setSource(next);
+    }
 
     let consecutiveErrors = 0;
     let lastPositionPush = 0;
@@ -35,15 +43,16 @@
       ui.setStatus(songs + ' · ' + mode);
     }
 
-    async function playIndex(index) {
+    async function playIndex(index, options) {
       if (index < 0) return;
       const track = queue.tracks[index];
       if (!track) return;
+      const autoplay = !options || options.autoplay !== false;
       ui.setTrack(track);
       ui.setProgress(0, 0);
       MP.MediaSession.setTrack(track);
       updateStatus();
-      await audio.load(track);
+      await audio.load(track, { autoplay: autoplay });
     }
 
     function next() {
@@ -171,7 +180,8 @@
     // --- library ---
 
     function loadFiles(fileList) {
-      const tracks = source.fromFiles(fileList);
+      useSource(MP.LocalSource);
+      const tracks = MP.LocalSource.fromFiles(fileList);
       if (!tracks.length) {
         ui.setHint('Nothing playable in that selection.');
         return;
@@ -189,13 +199,45 @@
     ui.picker.addEventListener('change', (e) => loadFiles(e.target.files));
     ui.pickerFiles.addEventListener('change', (e) => loadFiles(e.target.files));
 
-    // Lock-screen controls only appear for an installed app, so say so once,
-    // in the one place it is actionable.
-    if (MP.platform.iOS && !MP.platform.standalone && MP.platform.secure) {
-      ui.setHint('Tip: Share → Add to Home Screen for lock-screen controls');
+    function offerPicker(message) {
+      ui.showPicker();
+      ui.setHint(message || '');
+    }
+
+    /** Load the bucket if one is configured; fall back to the picker if not. */
+    async function openLibrary() {
+      const base = MP.config.libraryBase;
+      if (!base) {
+        // No bucket yet — the picker is the whole app, as in earlier steps.
+        if (MP.platform.iOS && !MP.platform.standalone && MP.platform.secure) {
+          offerPicker('Tip: Share → Add to Home Screen for lock-screen controls');
+        }
+        return;
+      }
+
+      ui.setHint('Loading library…');
+      try {
+        const remote = MP.RemoteSource(base);
+        const tracks = await remote.load();
+        if (!tracks.length) throw new Error('the library is empty');
+        useSource(remote);
+        queue.setTracks(tracks);
+        ui.showLibrary();
+        // Queued but not started: autoplay with no user gesture is blocked on
+        // iOS, and starting unbidden on launch is wrong on the desktop too.
+        await playIndex(queue.next(), { autoplay: false });
+        ui.setHint('Tap to play');
+      } catch (error) {
+        offerPicker(
+          'Could not load the library (' +
+            (error && error.message ? error.message : 'unknown error') +
+            '). You can still pick files from this device.'
+        );
+      }
     }
 
     updateStatus();
+    openLibrary();
   }
 
   if (document.readyState === 'loading') {

@@ -50,12 +50,22 @@
         ms.metadata = null;
         return;
       }
-      // No artwork yet — nothing supplies cover art until the R2 manifest
-      // carries it. The lock screen falls back to its own placeholder.
+      // Artwork comes from the manifest, so it is present for bucket tracks
+      // and absent for locally picked files — the lock screen falls back to
+      // its own placeholder when the list is empty. Sizes are declared rather
+      // than measured: iOS picks one before the image has loaded.
+      const artwork = track.cover
+        ? [
+            { src: track.cover, sizes: '512x512', type: 'image/jpeg' },
+            { src: track.cover, sizes: '256x256', type: 'image/jpeg' },
+          ]
+        : [];
+
       ms.metadata = new window.MediaMetadata({
         title: track.title || '',
         artist: track.artist || '',
-        album: '',
+        album: track.album || '',
+        artwork: artwork,
       });
     },
 

@@ -45,6 +45,11 @@
       this.now.hidden = false;
     }
 
+    showPicker() {
+      this.empty.hidden = false;
+      this.now.hidden = true;
+    }
+
     setTrack(track) {
       this.title.textContent = track ? track.title : '';
       this.artist.textContent = track ? track.artist : '';
