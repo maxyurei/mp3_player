@@ -69,7 +69,7 @@
       // Counting down rather than showing total length: the useful question
       // mid-track is how much is left.
       this.remaining.textContent =
-        duration > 0 ? '-' + MP.formatTime(duration - position) : '0:00';
+        duration > 0 ? '\u2212' + MP.formatTime(duration - position) : '0:00';
     }
 
     setStatus(text) {
