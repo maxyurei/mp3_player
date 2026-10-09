@@ -52,6 +52,7 @@
             title: entry.title || MP.parseName(entry.key.split('/').pop()).title,
             artist: entry.artist || MP.UNKNOWN_ARTIST,
             album: entry.album || '',
+            folder: MP.folderOf(entry.key),
             duration: Number(entry.duration) || 0,
             cover: entry.cover ? root + '/' + encodeKey(entry.cover) : '',
           }));

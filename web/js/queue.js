@@ -98,6 +98,7 @@
       if (this._pos < this._history.length - 1) {
         this._history.length = this._pos + 1;
       }
+      if (this.shuffle) this._bag.take(index);
       return this._push(index);
     }
 

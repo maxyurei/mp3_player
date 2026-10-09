@@ -27,7 +27,11 @@
       // has already skipped past cannot overwrite the current one.
       this._generation = 0;
 
+      // 'playing' as well as 'play': after a track change, 'play' can arrive
+      // before the new file has buffered, and 'playing' is the one that
+      // follows once it actually starts.
       el.addEventListener('play', () => this._state());
+      el.addEventListener('playing', () => this._state());
       el.addEventListener('pause', () => this._state());
       el.addEventListener('ended', () => this.onEnded && this.onEnded());
       el.addEventListener('timeupdate', () => this.onTime && this.onTime());
@@ -43,8 +47,13 @@
       this._source = source;
     }
 
+    /**
+     * Whether playback is wanted, not whether sound is coming out yet. A
+     * freshly swapped src sits at readyState 0 while it buffers, and counting
+     * that as paused left the screen dimmed after every skip.
+     */
     get isPlaying() {
-      return !this.el.paused && !this.el.ended && this.el.readyState > 0;
+      return !this.el.paused && !this.el.ended;
     }
 
     get position() {

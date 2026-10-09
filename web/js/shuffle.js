@@ -75,6 +75,19 @@
       [this._order[0], this._order[at]] = [this._order[at], this._order[0]];
       this._cursor = 0;
     }
+
+    /**
+     * Deal `index` next, out of turn: a song picked from the list counts as
+     * heard this pass, without restarting the pass the way seed() does. A song
+     * already dealt this pass is left where it is.
+     */
+    take(index) {
+      const at = this._order.indexOf(index);
+      if (at <= this._cursor) return;
+      const target = this._cursor + 1;
+      [this._order[target], this._order[at]] = [this._order[at], this._order[target]];
+      this._cursor = target;
+    }
   }
 
   MP.shuffledIndices = shuffledIndices;

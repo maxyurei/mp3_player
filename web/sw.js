@@ -3,7 +3,7 @@
 // Bump VERSION whenever a file in SHELL changes. That is the trigger for the
 // whole update: a byte-different sw.js makes the browser install a new worker,
 // which refetches the shell and drops the old cache.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'player-shell-' + VERSION;
 
 const SHELL = [
@@ -21,7 +21,9 @@ const SHELL = [
   './js/audio.js',
   './js/media-session.js',
   './js/gestures.js',
+  './js/library.js',
   './js/ui.js',
+  './js/sheet.js',
   './js/pwa.js',
   './js/app.js',
   './icons/icon-192.png',

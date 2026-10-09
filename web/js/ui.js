@@ -15,6 +15,7 @@
       this.elapsed = find('elapsed');
       this.remaining = find('remaining');
       this.status = find('status');
+      this.statusText = find('statusText');
       this.hint = find('hint');
       this.emptyCopy = find('emptyCopy');
       this.picker = find('picker');
@@ -72,7 +73,9 @@
     }
 
     setStatus(text) {
-      this.status.textContent = text;
+      this.statusText.textContent = text;
+      // No library, nothing to open.
+      this.status.hidden = !text;
     }
 
     setHint(text) {

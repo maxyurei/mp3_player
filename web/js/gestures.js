@@ -1,4 +1,4 @@
-// Tap anywhere to play/pause, swipe left/right to skip.
+// Tap anywhere to play/pause, swipe left/right to skip, swipe up for the list.
 //
 // Pointer events rather than touch events, so the same code serves a finger on
 // the phone and a mouse on the desktop. The thresholds below are what separate
@@ -15,7 +15,7 @@
   /**
    * @param {Element} el
    * @param {{onTap?:Function, onSwipeLeft?:Function, onSwipeRight?:Function,
-   *          ignore?:string}} options
+   *          onSwipeUp?:Function, ignore?:string}} options
    */
   function attachGestures(el, options) {
     const opts = options || {};
@@ -48,6 +48,14 @@
       ) {
         if (dx < 0) opts.onSwipeLeft && opts.onSwipeLeft();
         else opts.onSwipeRight && opts.onSwipeRight();
+        return;
+      }
+
+      if (
+        dy <= -SWIPE_MIN_PX &&
+        Math.abs(dy) > Math.abs(dx) * SWIPE_RATIO
+      ) {
+        opts.onSwipeUp && opts.onSwipeUp();
         return;
       }
 

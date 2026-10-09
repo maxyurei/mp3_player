@@ -16,6 +16,11 @@
     const ui = new MP.UI(document);
     const audio = new MP.AudioEngine(document.getElementById('audio'));
     const queue = new MP.Queue();
+    const sheet = new MP.Sheet(document);
+
+    // The queue holds one playlist at a time; the library holds them all.
+    let library = new MP.Library([]);
+    let playlistId = MP.Library.ALL;
 
     // Swapped at startup for the bucket when one is configured. Everything
     // below this line is written against the source interface, not against
@@ -40,7 +45,8 @@
       const mode = queue.shuffle
         ? 'shuffle · ' + queue.remaining + ' left this pass'
         : 'in order';
-      ui.setStatus(songs + ' · ' + mode);
+      const name = playlistId === MP.Library.ALL ? '' : library.get(playlistId).name + ' · ';
+      ui.setStatus(name + songs + ' · ' + mode);
     }
 
     async function playIndex(index, options) {
@@ -49,6 +55,7 @@
       if (!track) return;
       const autoplay = !options || options.autoplay !== false;
       ui.setTrack(track);
+      sheet.setCurrent(track.id, audio.isPlaying);
       ui.setProgress(0, 0);
       MP.MediaSession.setTrack(track);
       updateStatus();
@@ -81,6 +88,43 @@
       audio.toggle();
     }
 
+    /** Point the queue at a playlist. History starts over with it. */
+    function usePlaylist(id) {
+      if (id === playlistId && queue.length) return;
+      playlistId = id;
+      queue.setTracks(library.get(id).tracks);
+    }
+
+    /** Picked from the list: play that song, then carry on in its playlist. */
+    function playFromList(id, track) {
+      usePlaylist(id);
+      playIndex(queue.jumpTo(queue.tracks.indexOf(track)));
+    }
+
+    function shufflePlaylist(id) {
+      // Always a fresh pass, even for the playlist already playing: that is
+      // what pressing Shuffle means.
+      playlistId = null;
+      usePlaylist(id);
+      queue.setShuffle(true);
+      playIndex(queue.next());
+    }
+
+    sheet.onPick = playFromList;
+    sheet.onShuffle = shufflePlaylist;
+
+    function openSheet(focusSearch) {
+      if (!library.tracks.length) return;
+      sheet.open(playlistId, { focusSearch: focusSearch });
+    }
+
+    function setLibrary(tracks) {
+      library = new MP.Library(tracks);
+      playlistId = MP.Library.ALL;
+      queue.setTracks(library.tracks);
+      sheet.setLibrary(library, playlistId);
+    }
+
     function toggleShuffle() {
       queue.setShuffle(!queue.shuffle);
       updateStatus();
@@ -92,6 +136,8 @@
     audio.onStateChange = (isPlaying) => {
       ui.setPlaying(isPlaying);
       MP.MediaSession.setPlaying(isPlaying);
+      const current = queue.current;
+      sheet.setCurrent(current ? current.id : null, isPlaying);
       if (isPlaying) {
         consecutiveErrors = 0;
         ui.setHint('');
@@ -132,8 +178,11 @@
       onTap: toggle,
       onSwipeLeft: next,
       onSwipeRight: previous,
+      onSwipeUp: () => openSheet(false),
       ignore: '.progress, .picker, input, button, a',
     });
+
+    ui.status.addEventListener('click', () => openSheet(false));
 
     ui.progress.addEventListener('pointerdown', (event) => {
       const rect = ui.progress.getBoundingClientRect();
@@ -142,6 +191,21 @@
     });
 
     document.addEventListener('keydown', (event) => {
+      if (sheet.isOpen) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          sheet.close();
+        }
+        // Everything else belongs to the search box and the list while the
+        // sheet is up; space should not pause behind it.
+        return;
+      }
+      if (event.key === '/' && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault();
+        openSheet(true);
+        return;
+      }
+
       // Never swallow a key that belongs to a control the user is focused on.
       // event.target is not always an Element (it can be the document), so
       // closest() has to be checked for rather than assumed.
@@ -186,7 +250,7 @@
         ui.setHint('Nothing playable in that selection.');
         return;
       }
-      queue.setTracks(tracks);
+      setLibrary(tracks);
       ui.showLibrary();
       ui.setHint('');
       // The picker change is itself a user gesture, so starting here is
@@ -221,7 +285,7 @@
         const tracks = await remote.load();
         if (!tracks.length) throw new Error('the library is empty');
         useSource(remote);
-        queue.setTracks(tracks);
+        setLibrary(tracks);
         ui.showLibrary();
         // Queued but not started: autoplay with no user gesture is blocked on
         // iOS, and starting unbidden on launch is wrong on the desktop too.

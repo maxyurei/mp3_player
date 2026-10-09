@@ -33,6 +33,7 @@
           id: pathOf(file) || file.name + ':' + index,
           title: parsed.title,
           artist: parsed.artist,
+          folder: MP.folderOf(file.webkitRelativePath),
           file: file,
         };
       });
